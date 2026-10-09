@@ -1,0 +1,25 @@
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+.gradle-user-home/
+build/
+**/build/
+
+# Local Android SDK path
+local.properties
+
+# Native build output (reserved for the JNI chapters)
+.cxx/
+.externalNativeBuild/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Signing files must never be committed
+*.jks
+*.keystore
+keystore.properties
