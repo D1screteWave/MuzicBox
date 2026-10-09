@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" role="img" aria-labelledby="title desc">
+  <title id="title">MuzicBox 从点击歌曲到开始播放的调用链</title>
+  <desc id="desc">用户点击歌曲后，应用释放旧播放器、记录歌曲、设置数据源、异步准备，在准备完成回调中开始播放并更新按钮文字。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7f9e"/>
+    </marker>
+    <style>
+      .box { fill: #f5f8ff; stroke: #8bb4ef; stroke-width: 1.5; rx: 5; }
+      .line { fill: none; stroke: #6b7f9e; stroke-width: 1.8; marker-end: url(#arrow); }
+      .main { fill: #1f2937; font: 18px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; text-anchor: middle; }
+      .sub { fill: #4b5563; font: 16px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- 第一行：从左向右 -->
+  <rect class="box" x="20" y="20" width="250" height="70"/>
+  <text class="main" x="145" y="62">点击一首歌曲</text>
+
+  <rect class="box" x="320" y="20" width="250" height="70"/>
+  <text class="main" x="445" y="62">释放旧播放器</text>
+
+  <rect class="box" x="620" y="20" width="250" height="70"/>
+  <text class="main" x="745" y="50">记录当前歌曲</text>
+  <text class="sub" x="745" y="75">更新标题和选中行</text>
+
+  <rect class="box" x="920" y="20" width="250" height="70"/>
+  <text class="main" x="1045" y="50">setDataSource</text>
+  <text class="sub" x="1045" y="75">传入歌曲 URI</text>
+
+  <path class="line" d="M 270 55 H 316"/>
+  <path class="line" d="M 570 55 H 616"/>
+  <path class="line" d="M 870 55 H 916"/>
+
+  <!-- 第一行末端连接第二行开头 -->
+  <path class="line" d="M 1045 90 V 145"/>
+
+  <!-- 第二行：从右向左 -->
+  <rect class="box" x="920" y="150" width="250" height="70"/>
+  <text class="main" x="1045" y="180">prepareAsync</text>
+  <text class="sub" x="1045" y="205">异步准备</text>
+
+  <rect class="box" x="620" y="150" width="250" height="70"/>
+  <text class="main" x="745" y="180">onPrepared</text>
+  <text class="sub" x="745" y="205">收到准备完成回调</text>
+
+  <rect class="box" x="320" y="150" width="250" height="70"/>
+  <text class="main" x="445" y="180">MediaPlayer.start</text>
+  <text class="sub" x="445" y="205">开始播放</text>
+
+  <rect class="box" x="20" y="150" width="250" height="70"/>
+  <text class="main" x="145" y="180">更新播放按钮</text>
+  <text class="sub" x="145" y="205">文字变为“暂停”</text>
+
+  <path class="line" d="M 920 185 H 874"/>
+  <path class="line" d="M 620 185 H 574"/>
+  <path class="line" d="M 320 185 H 274"/>
+</svg>

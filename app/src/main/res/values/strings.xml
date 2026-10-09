@@ -1,14 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MuzicBox</string>
-    <string name="app_subtitle">Java + XML Android 学习项目</string>
     <string name="logo_description">MuzicBox 音符标志</string>
-    <string name="chapter_badge">CHAPTER 01 · 已完成</string>
-    <string name="chapter_title">工程创建成功</string>
-    <string name="chapter_summary">我们已经搭好最小可运行的 Android 工程，并认识 Activity、Manifest、XML 布局与资源目录。此版本暂不包含音乐播放功能。</string>
-    <string name="next_title">接下来会实现</string>
-    <string name="next_features">02  本地音乐扫描与基础播放\n03  后台音乐播放与 Service\n04  在线音乐播放与网络请求\n05  用 JNI 实现参数签名\n06  基础反调试与 Frida 检测\n07  R8 混淆、签名与加壳实验</string>
-    <string name="roadmap_button">查看学习路线</string>
-    <string name="roadmap_toast">完整路线已写入 GitHub 仓库的 ROADMAP.md</string>
-    <string name="version_label">v0.1.0 · 第一个可运行版本</string>
+    <string name="music_note">♪</string>
+    <string name="local_music">本地音乐</string>
+
+    <string name="waiting_to_scan">正在准备读取手机中的音乐</string>
+    <string name="scanning_local_music">正在扫描本地音乐…</string>
+    <string name="scanning">扫描中…</string>
+    <string name="rescan">重新扫描</string>
+    <string name="song_count">已找到 %1$d 首本地音乐</string>
+    <string name="no_local_music">没有找到本地音乐\n请确认手机中已有音频文件</string>
+
+    <string name="permission_needed">需要获得音频读取权限才能扫描本地音乐</string>
+    <string name="grant_permission">允许访问音乐</string>
+    <string name="permission_denied">尚未获得音频读取权限</string>
+    <string name="permission_denied_toast">没有音频读取权限，暂时无法扫描本地音乐</string>
+
+    <string name="no_song_selected">还没有选择歌曲</string>
+    <string name="tap_song_to_play">点击上方歌曲开始播放</string>
+    <string name="previous">上一首</string>
+    <string name="play">播放</string>
+    <string name="pause">暂停</string>
+    <string name="loading">载入中</string>
+    <string name="next">下一首</string>
+    <string name="no_music_to_play">当前没有可播放的音乐</string>
+    <string name="playback_failed">这首音乐暂时无法播放</string>
 </resources>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="250" viewBox="0 0 1200 250" role="img" aria-labelledby="title desc">
+  <title id="title">MuzicBox 本地音乐数据流</title>
+  <desc id="desc">获得音频读取权限后查询 MediaStore，将 Cursor 记录转换成 Song 集合，再由 SongAdapter 显示到 ListView。</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7f9e"/>
+    </marker>
+    <style>
+      .box { fill: #f5f8ff; stroke: #8bb4ef; stroke-width: 1.5; rx: 5; }
+      .line { fill: none; stroke: #6b7f9e; stroke-width: 1.8; marker-end: url(#arrow); }
+      .main { fill: #1f2937; font: 18px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; text-anchor: middle; }
+      .sub { fill: #4b5563; font: 16px "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- 第一行：从左向右 -->
+  <rect class="box" x="20" y="20" width="250" height="70"/>
+  <text class="main" x="145" y="62">获得音频读取权限</text>
+
+  <rect class="box" x="320" y="20" width="250" height="70"/>
+  <text class="main" x="445" y="50">ContentResolver</text>
+  <text class="sub" x="445" y="75">发起查询</text>
+
+  <rect class="box" x="620" y="20" width="250" height="70"/>
+  <text class="main" x="745" y="50">MediaStore</text>
+  <text class="sub" x="745" y="75">返回媒体记录</text>
+
+  <rect class="box" x="920" y="20" width="250" height="70"/>
+  <text class="main" x="1045" y="50">Cursor</text>
+  <text class="sub" x="1045" y="75">逐行读取结果</text>
+
+  <path class="line" d="M 270 55 H 316"/>
+  <path class="line" d="M 570 55 H 616"/>
+  <path class="line" d="M 870 55 H 916"/>
+
+  <!-- 第一行末端连接第二行开头 -->
+  <path class="line" d="M 1045 90 V 145"/>
+
+  <!-- 第二行：从右向左，延续同一条数据链 -->
+  <rect class="box" x="920" y="150" width="250" height="70"/>
+  <text class="main" x="1045" y="180">Song 对象</text>
+  <text class="sub" x="1045" y="205">保存一首歌曲</text>
+
+  <rect class="box" x="620" y="150" width="250" height="70"/>
+  <text class="main" x="745" y="180">List&lt;Song&gt;</text>
+  <text class="sub" x="745" y="205">歌曲集合</text>
+
+  <rect class="box" x="320" y="150" width="250" height="70"/>
+  <text class="main" x="445" y="180">SongAdapter</text>
+  <text class="sub" x="445" y="205">转换为列表项</text>
+
+  <rect class="box" x="20" y="150" width="250" height="70"/>
+  <text class="main" x="145" y="180">ListView</text>
+  <text class="sub" x="145" y="205">显示歌曲列表</text>
+
+  <path class="line" d="M 920 185 H 874"/>
+  <path class="line" d="M 620 185 H 574"/>
+  <path class="line" d="M 320 185 H 274"/>
+</svg>
