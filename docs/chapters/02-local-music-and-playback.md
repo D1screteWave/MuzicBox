@@ -40,23 +40,24 @@
 
 ### 1.2 从系统媒体库到歌曲列表
 
+本章的数据从系统媒体库进入 MuzicBox，最后显示为歌曲列表：
+
 ![MuzicBox 本地音乐数据流](../images/article-02/02-local-music-data-flow.svg)
 
-| 名称 | 性质 | 本章作用 |
-| --- | --- | --- |
-| `MediaStore` | Android 媒体库接口 | 提供媒体字段和查询地址 |
-| `ContentProvider` | Android 数据共享组件 | 提供系统媒体数据 |
-| `ContentResolver` | Android 查询对象 | 发起媒体库查询 |
-| `Cursor` | 查询结果读取接口 | 逐行读取媒体记录 |
-| content URI | Android 内容标识 | 定位媒体集合或具体歌曲 |
-| `Song` | 项目数据类 | 保存一首歌曲的信息 |
-| `SongAdapter` | 项目适配器 | 把歌曲数据交给列表显示 |
+图中几个关键对象的来源和形式如下：
 
-`ContentResolver` 按照 `MediaStore` 提供的地址和字段发起查询，系统用 `Cursor` 返回结果。代码把每条记录整理成 `Song`，其中的 content URI 会继续流向 MediaPlayer。
+| 名称 | 来源 | Java 形式 | 本章作用 | 关键代码 |
+| --- | --- | --- | --- | --- |
+| `ContentResolver` | Android 框架 | 抽象类；Android 返回对象 | 发起媒体库查询 | `contentResolver.query(...)` 发起查询 |
+| `ContentProvider` | Android 框架 | 抽象组件类；系统实现，本章间接访问 | 接收查询并提供系统媒体数据 | 无直接调用，由 `ContentResolver` 间接访问 |
+| `Cursor` | Android 框架 | 接口；查询返回实现对象 | 保存查询结果并逐行读取记录 | `cursor.moveToNext()` 移动，`cursor.getString()` 读取 |
+| content URI | Android 框架 | `Uri` 对象；本章生成 | 定位媒体集合或具体歌曲 | `ContentUris.withAppendedId(...)` 生成歌曲 URI |
+| `Song` | MuzicBox 项目 | 普通类；项目定义并创建 | 保存一首歌曲的信息 | `new Song(...)` 封装一条歌曲记录 |
+| `ListView` | Android 框架 | 界面类；布局创建，本章取得 | 在页面上显示歌曲列表 | `findViewById(R.id.list_songs)` 取得列表对象 |
 
 ### 1.3 APK 中的版本标识
 
-配置位于 `app/build.gradle`：
+第二章加入了本地音乐功能，因此应用版本也从第一章继续向前更新。版本信息配置在 `app/build.gradle` 的 `defaultConfig` 中：
 
 ```groovy
 defaultConfig {
@@ -65,7 +66,10 @@ defaultConfig {
 }
 ```
 
-`versionCode` 是 Android 和应用商店比较版本先后的整数，发布更新时必须增大。`versionName` 是展示给用户的字符串。构建 APK 后，这两个值会写入应用包信息，并显示在系统读取到的应用信息中。
+`versionCode` 是 Android 和应用商店比较版本先后的整数，数值 `2` 表示它晚于上一版的 `1`。
+`versionName` 是供用户识别的版本名称，本章使用 `0.2.0`。
+构建 APK 后，系统的应用信息页面或应用商店可以读取并显示这个 `versionName`；MuzicBox 的主界面不会自动显示它，如果以后要在“关于”页面中显示，还需要用代码读取应用包信息并设置到文字控件中。
+两者由开发者分别维护，不会自动换算；构建 APK 时，它们都会写入应用包信息。
 
 ## 2. Android 音频权限机制
 
@@ -92,9 +96,11 @@ Manifest 声明 = 应用提前登记需要什么能力
 
 只有声明而没有运行时授权，扫描仍可能失败；Manifest 中完全没有声明，代码也无法通过弹窗取得相应权限。
 
-### 2.2 Android 13 前后的权限差异
+### 2.2 为什么要声明两种音频权限
 
-Android 13（API 33）开始使用更细分的媒体权限。读取音频使用 `READ_MEDIA_AUDIO`；Android 12 及以下使用 `READ_EXTERNAL_STORAGE`。
+上一节同时声明两种权限，是因为 Android 13（API 33）调整了媒体读取权限：Android 13 及以上读取音频使用 `READ_MEDIA_AUDIO`，Android 12 及以下使用 `READ_EXTERNAL_STORAGE`。
+
+Manifest 负责把两种情况都提前声明出来，App 运行时还要根据当前手机的 Android 版本选择其中一种。下面的 `getAudioPermission()` 方法来自 `MainActivity.java`，它只返回本次应该使用的权限名称，真正的检查和申请会在下一节调用这个方法。
 
 ```java
 private String getAudioPermission() {
@@ -113,7 +119,7 @@ Manifest 中的 `android:maxSdkVersion="32"` 则把旧权限限制在 API 32 及
 
 ### 2.3 检查、申请与结果回调
 
-发起权限窗口前先检查当前状态：
+下面三个方法都来自 `MainActivity.java`，依次负责检查权限、发起申请和接收结果。首先检查当前状态：
 
 ```java
 private boolean hasAudioPermission() {
@@ -225,7 +231,7 @@ ContentResolver.query(MediaStore URI, 查询条件)
 
 ### 3.3 查询字段与筛选条件
 
-扫描入口位于 `LocalMusicScanner.scan`。首先确定音频集合：
+本节代码摘自 `LocalMusicScanner.java` 的 `scan(...)` 方法，只保留查询相关的核心部分。首先确定音频集合：
 
 ```java
 Uri collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -289,7 +295,7 @@ Cursor cursor = contentResolver.query(
 
 ### 3.4 从 Cursor 记录生成歌曲 URI
 
-Cursor 刚返回时没有指向具体记录。`moveToNext()` 每次移动到下一行，返回 `false` 时表示读取完毕：
+下面仍是 `scan(...)` 中的核心逻辑，负责把 Cursor 记录转换为 `Song`。Cursor 刚返回时没有指向具体记录，`moveToNext()` 每次移动到下一行，返回 `false` 时表示读取完毕：
 
 ```java
 while (cursor.moveToNext()) {
@@ -323,12 +329,14 @@ Cursor 到 `Song` 的转换位置是数据汇合点：标题、歌手、时长�
 
 音频文件除了声音数据，还可以携带标题、歌手、专辑和封面等元数据。MP3 常用 ID3 标签保存这些信息，一个标签帧对应一类字段。
 
-本章两首测试音乐都包含 ID3v2.4 标签：
+读取两首测试 MP3 自身的 ID3 元数据后，可以看到它们都包含 ID3v2.4 标签：
 
 | 文件 | 实际发现的关键标签 |
 | --- | --- |
 | `来自天堂的魔鬼-邓紫棋.mp3` | `TIT2=来自天堂的魔鬼`、`TPE1=G.E.M. 邓紫棋`、`TALB=新的心跳`、`TCON=Blues`、`TRCK=4/10`、`TPOS=1/1`，并带有 `APIC` 封面 |
 | `魔鬼中的天使-田馥甄.mp3` | `TIT2=魔鬼中的天使`、`TPE1=田馥甄`、`TSSE=Lavf57.71.100` |
+
+上表中的标签缩写含义如下：
 
 | ID3 帧 | 常见含义 |
 | --- | --- |
@@ -346,6 +354,8 @@ Android 媒体扫描器读取标签后，将能识别的信息写入 MediaStore�
 
 ### 4.2 MP3 文件的基本组成
 
+MP3 文件可以粗略分成标签信息和音频帧两部分：
+
 ```text
 [可选 ID3v2 标签]
     ├─ 标题、歌手、专辑等文本帧
@@ -358,7 +368,7 @@ Android 媒体扫描器读取标签后，将能识别的信息写入 MediaStore�
     └─ 位于文件尾部的旧式标签
 ```
 
-本章两个文件开头的 `49 44 33` 对应字符 `ID3`，之后可以看到 `TIT2`、`TPE1` 等帧标识。ID3 标签帧负责描述歌曲，MPEG Audio Frame 才是声音主体。
+查看本章两个文件开头的原始字节时，`49 44 33` 对应字符 `ID3`，之后可以看到 `TIT2`、`TPE1` 等帧标识。ID3 标签帧负责描述歌曲，MPEG Audio Frame 才是声音主体。
 
 时长不一定保存在标签中，媒体扫描器或解码器也可以根据音频帧等信息计算。因此，“标题能被识别”和“时长能被识别”可能来自不同解析过程。
 
@@ -391,6 +401,8 @@ Android 媒体扫描器读取标签后，将能识别的信息写入 MediaStore�
 
 开发时既要关注 Java 层如何处理标题和封面，也要注意输入何时进入系统媒体扫描器或底层解码器。前者可能造成界面异常、内存压力或业务逻辑问题，后者则涉及更复杂的文件解析过程。
 
+这些外部数据主要沿下面两条路径进入界面和播放器：
+
 ```text
 音频文件字节
     ↓ 系统媒体扫描与格式解析
@@ -413,9 +425,7 @@ Song 对象
 
 ## 5. 跨线程扫描与异步回调
 
-媒体库查询可能耗时，因此使用 `ExecutorService` 在工作线程扫描；扫描完成后，再通过 `runOnUiThread()` 回到主线程刷新界面：
-
-Android 的界面绘制和控件事件主要由主线程处理。查询如果长时间占用主线程，页面就无法及时响应触摸和重绘；工作线程适合执行查询，但 View 的更新仍要回到主线程。
+`ExecutorService` 是 Java 提供的任务执行器，`runOnUiThread()` 是 Activity 切回主线程的方法。下面的代码摘自 `MainActivity.java` 的 `scanLocalMusic()`：查询在工作线程执行，列表更新回到主线程完成。
 
 ```java
 scanExecutor.execute(() -> {
@@ -429,6 +439,8 @@ scanExecutor.execute(() -> {
     });
 });
 ```
+
+其中 `songs` 保存扫描结果，`songAdapter.notifyDataSetChanged()` 通知列表重新显示数据。执行顺序如下：
 
 ```text
 主线程提交扫描任务
@@ -470,6 +482,8 @@ Activity 也可能在扫描完成前销毁。代码在更新界面前检查 `isF
 
 ### 6.1 从点击歌曲到开始播放
 
+下图对应 `MainActivity.playSong(position)` 的主要执行路径：
+
 ![从点击歌曲到开始播放的调用链](../images/article-02/03-playback-call-chain.svg)
 
 列表点击事件提供 `position`，`playSong(position)` 再通过 `songs.get(position)` 取得 `Song` 和 content URI。调用 `prepareAsync()` 后，播放器在准备完成时回调 `onPrepared`，随后执行 `start()`。
@@ -479,6 +493,8 @@ Activity 也可能在扫描完成前销毁。代码在更新界面前检查 `isF
 流程图最后更新按钮文字只是界面反馈，真正开始播放的调用仍然是 `MediaPlayer.start()`。判断应用是否已经播放时，应查看播放器方法和状态，而不是只看按钮文本。
 
 ### 6.2 设置数据源并异步准备
+
+下面是 `playSong(...)` 中创建播放器、设置歌曲 URI 并等待准备完成的核心片段：
 
 ```java
 MediaPlayer newPlayer = new MediaPlayer();
@@ -502,7 +518,7 @@ Activity 本身也是 Context，因此可以传入 `this`，让 MediaPlayer 通�
 
 ### 6.3 完成、错误与关键观察点
 
-MediaPlayer 通过监听器报告播放事件：
+`playSong(...)` 还会为 MediaPlayer 注册监听器，用来接收播放完成和播放错误事件：
 
 ```java
 newPlayer.setOnCompletionListener(player -> playNext());
@@ -537,7 +553,7 @@ newPlayer.setOnErrorListener((player, what, extra) -> {
 
 ### 6.4 Activity 生命周期与资源释放
 
-切换歌曲前先释放旧播放器：
+`releasePlayer()` 位于 `MainActivity.java`，切换歌曲或离开页面时用它释放播放器：
 
 ```java
 private void releasePlayer() {
@@ -554,7 +570,7 @@ private void releasePlayer() {
 
 Java 变量只保存对象引用，而 MediaPlayer 背后还会占用系统音频服务和底层资源。主动调用 `release()` 才表示不再使用这些资源；切歌前释放旧实例，也能避免旧回调影响新歌曲。
 
-本章没有 Service，播放器仍然属于 `MainActivity`。页面进入 `onStop()` 后停止播放；页面实例销毁时，还要关闭扫描执行器：
+本章没有 Service，播放器仍然属于 `MainActivity`。同一文件中的 `onStop()` 会在页面不可见后停止播放，`onDestroy()` 会在页面实例销毁时关闭扫描执行器：
 
 ```java
 @Override
@@ -601,15 +617,13 @@ XML 中的控件 ID 会生成对应的 `R.id.xxx`。从资源 ID 可以继续定
 
 源码中可以搜索 `R.id.xxx`；构建后的 APK 中还会保存布局 XML、资源 ID 和 `resources.arsc`。`resources.arsc` 是编译后的资源表，记录资源 ID、名称和值之间的对应关系。
 
-阅读界面相关代码时，可以先在布局中确定控件 ID，再搜索 `findViewById`、View Binding 结果或事件监听器。找到控件变量后，继续查看：
+阅读界面相关代码时，可以先在布局中确定控件 ID，再搜索 `findViewById` 或事件监听器。找到控件变量后，继续查看：
 
 - `setOnClickListener`：控件点击后执行什么；
 - `setAdapter`：列表从哪里取得数据；
 - `setText`：界面文字由谁更新。
 
 把这些调用连接起来，才能理解完整业务路径。
-
-混淆通常主要改变 Java 类名和方法名，不会自动隐藏所有资源名称。清楚的资源 ID 因此既方便开发，也方便排查界面与业务代码之间的关系。
 
 界面文字还可能来自 `strings.xml`、MediaStore 或运行时状态，单看布局文件无法确认最终内容。阅读资源的目标不应停在控件样式，还要继续找到对应的权限、查询和播放入口。
 
